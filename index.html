@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clave - Organizador de Partituras</title>
+    <!-- Tailwind CSS para um design moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para ícones musicais e de interface -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts para tipografia elegante -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .serif-title {
+            font-family: 'Playfair Display', serif;
+        }
+        /* Custom scrollbar para parecer premium */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #fbbf24;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- Header Principal -->
+    <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                <i class="fa-solid fa-music text-slate-950 text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                    Clave <span class="text-xs bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 font-normal">Estúdio</span>
+                </h1>
+                <p class="text-xs text-slate-400">Seu acervo digital de partituras</p>
+            </div>
+        </div>
+
+        <!-- Barra de Busca -->
+        <div class="flex-1 max-w-md mx-4 min-w-[240px]">
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
+                <input type="text" id="searchInput" oninput="handleSearch()" class="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors" placeholder="Buscar por título, compositor ou instrumento...">
+            </div>
+        </div>
+
+        <!-- Botões de Ação do Header -->
+        <div class="flex items-center gap-3">
+            <!-- Botão Metrônomo Rápido -->
+            <button onclick="toggleMetronomePanel()" class="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium transition-colors border border-slate-700">
+                <i class="fa-solid fa-gauge-simple-high text-amber-400 animate-pulse-slow"></i>
+                <span class="hidden sm:inline">Metrônomo</span>
+            </button>
+
+            <!-- Botão Guia GitHub -->
+            <button onclick="openModal('githubModal')" class="flex items-center gap-2 px-3 py-2 bg-emerald-950/40 hover:bg-emerald-900/40 text-emerald-400 rounded-lg text-sm font-medium transition-colors border border-emerald-500/30">
+                <i class="fa-brands fa-github"></i>
+                <span class="hidden sm:inline">Como Hospedar</span>
+            </button>
+
+            <!-- Botão Nova Partitura -->
+            <button onclick="openAddSongModal()" class="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-sm font-semibold shadow-lg shadow-amber-500/15 transition-all transform hover:-translate-y-0.5">
+                <i class="fa-solid fa-plus"></i>
+                <span>Nova Partitura</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Layout Principal -->
+    <div class="flex-1 flex flex-col md:flex-row">
+        
+        <!-- Sidebar Esquerda: Navegação e Pastas -->
+        <aside class="w-full md:w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col gap-6 shrink-0">
+            <!-- Atalhos de Navegação -->
+            <div class="flex flex-col gap-1">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-2">Navegar</span>
+                <button onclick="selectFolder('all')" id="btn-folder-all" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium bg-slate-800 text-amber-400 transition-colors text-left w-full group">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-folder-open w-4 text-center"></i>
+                        Todas as Músicas
+                    </span>
+                    <span id="count-all" class="text-xs bg-slate-950 px-2 py-0.5 rounded-md text-slate-400">0</span>
+                </button>
+                <button onclick="selectFolder('favorites')" id="btn-folder-favorites" class="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800/50 text-slate-400 hover:text-slate-200 transition-colors text-left w-full group">
+                    <span class="flex items-center gap-3">
+                        <i class="fa-solid fa-star text-amber-500 w-4 text-center"></i>
+                        Favoritas
+                    </span>
+                    <span id="count-favorites" class="text-xs bg-slate-950 px-2 py-0.5 rounded-md text-slate-400">0</span>
+                </button>
+            </div>
+
+            <!-- Seção de Pastas -->
+            <div class="flex flex-col gap-2 flex-1">
+                <div class="flex items-center justify-between mb-1 px-2">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pastas</span>
+                    <button onclick="openPromptCreateFolder()" class="text-xs text-amber-500 hover:text-amber-400 transition-colors flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Criar
+                    </button>
+                </div>
+                <!-- Lista de Pastas Dinâmica -->
+                <div id="foldersList" class="flex flex-col gap-1 max-h-[300px] overflow-y-auto pr-1">
+                    <!-- Gerado Dinamicamente -->
+                </div>
+            </div>
+
+            <!-- Rodapé da Sidebar: Info -->
+            <div class="mt-auto border-t border-slate-800 pt-4 text-center md:text-left">
+                <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-xs text-slate-400">
+                    <p class="font-medium text-slate-300 mb-1"><i class="fa-solid fa-circle-info text-amber-500 mr-1"></i> Modo Offline Ativo</p>
+                    Suas partituras são carregadas temporariamente no seu navegador de forma super segura e rápida.
+                </div>
+            </div>
+        </aside>
+
+        <!-- Área de Conteúdo Principal -->
+        <main class="flex-1 p-6 md:p-8 flex flex-col gap-6">
+            
+            <!-- Banner / Informações da Pasta Selecionada -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 to-slate-900/40 p-6 rounded-2xl border border-slate-800">
+                <div>
+                    <h2 id="currentFolderName" class="text-2xl font-bold serif-title text-white">Todas as Músicas</h2>
+                    <p id="currentFolderDesc" class="text-sm text-slate-400 mt-1">Navegando por todas as partituras disponíveis no seu estúdio.</p>
+                </div>
+                <div class="flex items-center gap-3 self-start sm:self-auto">
+                    <!-- Filtro por Instrumento -->
+                    <select id="instrumentFilter" onchange="handleFilter()" class="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500">
+                        <option value="all">Todos os Instrumentos</option>
+                        <option value="Piano">Piano</option>
+                        <option value="Teclado">Teclado</option>
+                        <option value="Violão/Guitarra">Violão/Guitarra</option>
+                        <option value="Violino">Violino</option>
+                        <option value="Flauta">Flauta</option>
+                        <option value="Canto/Voz">Canto/Voz</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+
+                    <!-- Filtro de Dificuldade -->
+                    <select id="difficultyFilter" onchange="handleFilter()" class="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500">
+                        <option value="all">Todas as Dificuldades</option>
+                        <option value="Iniciante">Iniciante</option>
+                        <option value="Intermediário">Intermediário</option>
+                        <option value="Avançado">Avançado</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Grid de Partituras -->
+            <div id="songsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Gerado Dinamicamente -->
+            </div>
+
+            <!-- Estado de Vazio (Aparece quando não há músicas) -->
+            <div id="emptyState" class="hidden flex-col items-center justify-center py-16 text-center max-w-md mx-auto">
+                <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center text-slate-600 mb-4 border border-slate-800">
+                    <i class="fa-solid fa-file-music text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-slate-200">Nenhuma partitura encontrada</h3>
+                <p class="text-sm text-slate-500 mt-2">Clique no botão "Nova Partitura" no topo para adicionar sua primeira partitura (PDF ou imagem) e começar a organizar.</p>
+                <button onclick="openAddSongModal()" class="mt-4 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-800 rounded-lg text-xs font-semibold transition-colors">
+                    Adicionar Primeira Música
+                </button>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Painel Lateral Flutuante: Metrônomo -->
+    <div id="metronomePanel" class="fixed right-0 top-20 bottom-0 w-80 bg-slate-900 border-l border-slate-800 shadow-2xl z-30 transform translate-x-full transition-transform duration-300 ease-in-out p-6 flex flex-col justify-between">
+        <div>
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+                <h3 class="text-md font-semibold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-gauge-simple-high text-amber-500"></i> Metrônomo
+                </h3>
+                <button onclick="toggleMetronomePanel()" class="text-slate-400 hover:text-slate-200 text-sm">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Ritmo Pulsante -->
+            <div class="flex justify-center mb-6">
+                <div id="metroPulse" class="w-20 h-20 rounded-full border-4 border-slate-800 flex items-center justify-center bg-slate-950 transition-all duration-100">
+                    <i class="fa-solid fa-heart-pulse text-2xl text-slate-700" id="pulseHeart"></i>
+                </div>
+            </div>
+
+            <!-- BPM Display -->
+            <div class="text-center mb-6">
+                <span id="bpmDisplay" class="text-5xl font-extrabold text-amber-400">120</span>
+                <span class="text-xs text-slate-500 block uppercase mt-1 tracking-wider">Batidas por Minuto (BPM)</span>
+            </div>
+
+            <!-- BPM Slider -->
+            <div class="mb-6">
+                <input type="range" id="bpmRange" min="40" max="240" value="120" oninput="updateBPM(this.value)" class="w-full accent-amber-500 h-2 bg-slate-950 rounded-lg appearance-none cursor-pointer">
+                <div class="flex justify-between text-xs text-slate-500 mt-2">
+                    <span>Largo (40)</span>
+                    <span>Presto (240)</span>
+                </div>
+            </div>
+
+            <!-- Botões Rápidos BPM -->
+            <div class="grid grid-cols-4 gap-2 mb-6">
+                <button onclick="adjustBPM(-10)" class="py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 rounded text-xs transition-colors">-10</button>
+                <button onclick="adjustBPM(-1)" class="py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 rounded text-xs transition-colors">-1</button>
+                <button onclick="adjustBPM(1)" class="py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 rounded text-xs transition-colors">+1</button>
+                <button onclick="adjustBPM(10)" class="py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 rounded text-xs transition-colors">+10</button>
+            </div>
+
+            <!-- Seletor de Compassos -->
+            <div class="mb-6">
+                <label class="block text-xs text-slate-400 mb-2 uppercase tracking-wide">Fórmula de Compasso</label>
+                <select id="timeSignature" class="w-full bg-slate-950 border border-slate-800 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500">
+                    <option value="4">4/4 (Quaternário)</option>
+                    <option value="3">3/4 (Ternário)</option>
+                    <option value="2">2/4 (Binário)</option>
+                    <option value="6">6/8 (Sextuplo)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Botão Play / Stop -->
+        <div>
+            <button id="btnPlayMetro" onclick="toggleMetronomePlay()" class="w-full py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl font-bold tracking-wider transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-play"></i> INICIAR
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL: Adicionar Partitura -->
+    <div id="addSongModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+                <h3 class="text-lg font-bold text-white serif-title flex items-center gap-2">
+                    <i class="fa-solid fa-file-circle-plus text-amber-500"></i> Adicionar Partitura
+                </h3>
+                <button onclick="closeModal('addSongModal')" class="text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <form onsubmit="saveNewSong(event)" class="p-6 overflow-y-auto flex-1 flex flex-col gap-4">
+                <!-- Seletor de Arquivo -->
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1.5 uppercase font-medium">Arquivo da Partitura (PDF ou Imagem) *</label>
+                    <div class="relative border-2 border-dashed border-slate-800 hover:border-amber-500/50 rounded-xl p-4 transition-colors bg-slate-950/50 flex flex-col items-center justify-center text-center cursor-pointer">
+                        <input type="file" id="songFileInput" required accept="application/pdf, image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="handleFileSelected(this)">
+                        <div id="filePlaceholder" class="flex flex-col items-center justify-center gap-2 py-3">
+                            <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-600"></i>
+                            <p class="text-xs text-slate-400"><span class="text-amber-500 font-semibold">Clique para fazer upload</span> ou arraste e solte</p>
+                            <span class="text-[10px] text-slate-500">PDF, PNG, JPG de até 15MB</span>
+                        </div>
+                        <div id="fileSelectedInfo" class="hidden flex-col items-center justify-center gap-2 py-3">
+                            <i class="fa-solid fa-file-circle-check text-3xl text-emerald-500"></i>
+                            <p id="selectedFileName" class="text-xs text-slate-200 font-semibold break-all px-4"></p>
+                            <span class="text-[10px] text-slate-400">Clique para alterar o arquivo</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Título e Compositor -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="songTitle" class="block text-xs text-slate-400 mb-1.5 uppercase font-medium">Título da Música *</label>
+                        <input type="text" id="songTitle" required class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500" placeholder="Ex: Fur Elise">
+                    </div>
+                    <div>
+                        <label for="songComposer" class="block text-xs text-slate-400 mb-1.5 uppercase font-medium">Compositor</label>
+                        <input type="text" id="songComposer" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500" placeholder="Ex: Beethoven">
+                    </div>
+                </div>
+
+                <!-- Instrumento, Tom e Dificuldade -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label for="songInstrument" class="block text-xs text-slate-400 mb-1.5 uppercase font-medium">Instrumento</label>
+                        <select id="songInstrument" class="w-full bg-slate-950 border border-slate-800 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500">
+                            <option value="Piano">Piano</option>
+                            <option value="Teclado">Teclado</option>
+                            <option value="Violão/Guitarra">Violão/Guitarra</option>
+                            <option value="Violino">Violino</option>
+                            <option value="Flauta">Flauta</option>
+                            <option value="Canto/Voz">Canto/Voz</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="songKey" class="block text-xs text-slate-400 mb-1.5 uppercase font-medium">Tom da Música</label>
+                        <input type="text" id="songKey" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500" placeholder="Ex: Am, C#, Sol">
+                    </div>
+                    <div>
+                        <label for="songDifficulty" class="block text-xs text-slate-400 mb-1.5 uppercase font-medium">Dificuldade</label>
+                        <select id="songDifficulty" class="w-full bg-slate-950 border border-slate-800 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500">
+                            <option value="Iniciante">Iniciante</option>
+                            <option value="Intermediário" selected>Intermediário</option>
+                            <option value="Avançado">Avançado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Seletor de Pasta -->
+                <div>
+                    <label for="songFolder" class="block text-xs text-slate-400 mb-1.5 uppercase font-medium">Salvar na Pasta</label>
+                    <select id="songFolder" class="w-full bg-slate-950 border border-slate-800 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500">
+                        <!-- Gerado dinamicamente -->
+                    </select>
+                </div>
+
+                <!-- Notas Adicionais -->
+                <div>
+                    <label for="songNotes" class="block text-xs text-slate-400 mb-1.5 uppercase font-medium">Anotações de Ensaio</label>
+                    <textarea id="songNotes" rows="3" class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500" placeholder="Insira dedilhados, metas de BPM ou trechos difíceis que precisam de mais atenção..."></textarea>
+                </div>
+
+                <!-- Botões -->
+                <div class="flex justify-end gap-3 mt-4 border-t border-slate-800 pt-4">
+                    <button type="button" onclick="closeModal('addSongModal')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-sm font-bold shadow-lg shadow-amber-500/15 transition-colors">
+                        Salvar Partitura
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Visualizador de Partituras (Modo Tela Cheia) -->
+    <div id="viewerModal" class="fixed inset-0 bg-slate-950 z-50 flex flex-col hidden">
+        
+        <!-- Header do Visualizador -->
+        <div class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button onclick="closeViewer()" class="text-slate-400 hover:text-slate-200 mr-2">
+                    <i class="fa-solid fa-arrow-left text-xl"></i>
+                </button>
+                <div>
+                    <h3 id="viewerTitle" class="text-md font-bold text-white serif-title">Título da Música</h3>
+                    <p id="viewerSubtitle" class="text-xs text-slate-400">Beethoven • Piano • Tom: Am</p>
+                </div>
+            </div>
+
+            <!-- Controles Adicionais do Visualizador -->
+            <div class="flex items-center gap-3">
+                <!-- Toggle Favorito -->
+                <button id="viewerBtnFav" onclick="toggleViewerFavorite()" class="w-10 h-10 rounded-lg bg-slate-800 text-slate-400 hover:text-amber-500 transition-colors flex items-center justify-center">
+                    <i class="fa-solid fa-star"></i>
+                </button>
+                <!-- Metrônomo Rápido -->
+                <button onclick="toggleMetronomePanel()" class="w-10 h-10 rounded-lg bg-slate-800 text-slate-300 hover:text-amber-400 transition-colors flex items-center justify-center">
+                    <i class="fa-solid fa-gauge-simple-high"></i>
+                </button>
+                <!-- Fechar -->
+                <button onclick="closeViewer()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-semibold transition-colors">
+                    Voltar ao Estúdio
+                </button>
+            </div>
+        </div>
+
+        <!-- Conteúdo do Visualizador Dividido -->
+        <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+            <!-- Esquerda: O Arquivo em si -->
+            <div class="flex-1 bg-slate-950 flex items-center justify-center p-4 overflow-auto border-r border-slate-900 relative">
+                <div id="viewerFileContainer" class="w-full h-full max-w-5xl rounded-lg overflow-hidden border border-slate-800 bg-slate-900 flex items-center justify-center">
+                    <!-- Gerado por JS (Embed de PDF ou Tag de Imagem) -->
+                    <div class="text-slate-500 flex flex-col items-center gap-2">
+                        <i class="fa-solid fa-file-pdf text-5xl"></i>
+                        <p class="text-sm">Carregando arquivo...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Direita: Metadados, Notas de Ensaio e Edição Rápida -->
+            <div class="w-full lg:w-96 bg-slate-900 flex flex-col gap-6 p-6 border-t lg:border-t-0 border-slate-800 overflow-y-auto shrink-0">
+                
+                <!-- Card de Informações Editáveis -->
+                <div>
+                    <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Informações Detalhadas</h4>
+                    <div class="flex flex-col gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                        <div>
+                            <label class="text-[10px] text-slate-500 uppercase block font-medium">Nome do Arquivo</label>
+                            <input type="text" id="editViewerTitle" class="w-full bg-transparent border-b border-transparent focus:border-amber-500 text-slate-200 text-sm font-semibold py-1 focus:outline-none" onchange="updateSongFromViewer('title', this.value)">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-slate-500 uppercase block font-medium">Compositor</label>
+                            <input type="text" id="editViewerComposer" class="w-full bg-transparent border-b border-transparent focus:border-amber-500 text-slate-300 text-xs py-1 focus:outline-none" onchange="updateSongFromViewer('composer', this.value)">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[10px] text-slate-500 uppercase block font-medium">Tom (Key)</label>
+                                <input type="text" id="editViewerKey" class="w-full bg-transparent border-b border-transparent focus:border-amber-500 text-slate-300 text-xs py-1 focus:outline-none" onchange="updateSongFromViewer('key', this.value)">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-500 uppercase block font-medium">Pasta</label>
+                                <select id="editViewerFolder" class="w-full bg-transparent text-slate-300 text-xs py-1 focus:outline-none cursor-pointer border-b border-transparent focus:border-amber-500" onchange="updateSongFromViewer('folderId', this.value)">
+                                    <!-- Dinâmico -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bloco de Notas Integrado -->
+                <div class="flex-1 flex flex-col min-h-[200px]">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Anotações e Prática</h4>
+                        <span class="text-[10px] text-amber-500 font-medium"><i class="fa-solid fa-rotate animate-spin-slow mr-1"></i>Salva automaticamente</span>
+                    </div>
+                    <textarea id="viewerNotes" oninput="updateSongFromViewer('notes', this.value)" class="w-full flex-1 bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/50 resize-none font-mono" placeholder="Escreva dedilhados, andamento alvo, compassos desafiadores aqui..."></textarea>
+                </div>
+
+                <!-- Botão Deletar Música -->
+                <div class="pt-4 border-t border-slate-800">
+                    <button onclick="deleteSongFromViewer()" class="w-full py-2.5 bg-red-950/40 hover:bg-red-900/40 text-red-400 border border-red-500/20 hover:border-red-500/30 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-trash-can"></i> Deletar Música do Estúdio
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Como Hospedar Grátis no GitHub Pages -->
+    <div id="githubModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+                <h3 class="text-lg font-bold text-white serif-title flex items-center gap-2 text-emerald-400">
+                    <i class="fa-brands fa-github"></i> Publicar Grátis no GitHub Pages
+                </h3>
+                <button onclick="closeModal('githubModal')" class="text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1 text-sm text-slate-300 flex flex-col gap-4">
+                <p>O GitHub Pages permite que você coloque este aplicativo do Clave na internet totalmente de graça e sem precisar programar nada extra. Siga este passo a passo:</p>
+
+                <div class="flex flex-col gap-4">
+                    <!-- Passo 1 -->
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex gap-3">
+                        <div class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs shrink-0">1</div>
+                        <div>
+                            <h4 class="font-semibold text-white text-sm mb-1">Baixe este arquivo HTML</h4>
+                            <p class="text-xs text-slate-400">Baixe este código gerado e renomeie o arquivo no seu computador exatamente para: <code class="bg-slate-900 px-1.5 py-0.5 rounded text-amber-400 border border-slate-800 font-mono text-xs">index.html</code></p>
+                        </div>
+                    </div>
+
+                    <!-- Passo 2 -->
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex gap-3">
+                        <div class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs shrink-0">2</div>
+                        <div>
+                            <h4 class="font-semibold text-white text-sm mb-1">Crie uma conta no GitHub</h4>
+                            <p class="text-xs text-slate-400">Acesse <a href="https://github.com" target="_blank" class="text-amber-500 underline hover:text-amber-400">github.com</a>, faça seu cadastro (é gratuito!) e clique no botão verde <strong class="text-slate-200">New Repository</strong> (Novo Repositório).</p>
+                        </div>
+                    </div>
+
+                    <!-- Passo 3 -->
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex gap-3">
+                        <div class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs shrink-0">3</div>
+                        <div>
+                            <h4 class="font-semibold text-white text-sm mb-1">Configure o Repositório</h4>
+                            <p class="text-xs text-slate-400">Dê um nome para ele (ex: <code class="bg-slate-900 px-1 rounded text-slate-300 font-mono text-xs">minhas-partituras</code>), deixe-o como <strong class="text-slate-200">Public</strong>, selecione a opção "Add a README file" e clique em "Create repository".</p>
+                        </div>
+                    </div>
+
+                    <!-- Passo 4 -->
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex gap-3">
+                        <div class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs shrink-0">4</div>
+                        <div>
+                            <h4 class="font-semibold text-white text-sm mb-1">Suba o seu arquivo index.html</h4>
+                            <p class="text-xs text-slate-400">Dentro da página do seu repositório, clique em <strong class="text-slate-200">Add file</strong> > <strong class="text-slate-200">Upload files</strong>. Arraste e solte o seu arquivo <code class="bg-slate-900 px-1 rounded text-amber-400 font-mono text-xs">index.html</code> ali e depois clique no botão verde <strong class="text-slate-200">Commit changes</strong> no final da página.</p>
+                        </div>
+                    </div>
+
+                    <!-- Passo 5 -->
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex gap-3">
+                        <div class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs shrink-0">5</div>
+                        <div>
+                            <h4 class="font-semibold text-white text-sm mb-1">Ative o GitHub Pages</h4>
+                            <p class="text-xs text-slate-400">Na página do repositório, clique na aba superior <strong class="text-slate-200">Settings</strong> (Configurações). No menu esquerdo, vá em <strong class="text-slate-200">Pages</strong>. Na seção "Build and deployment", mude o Branch de "None" para <strong class="text-slate-200">main</strong> (ou master) e clique em <strong class="text-slate-200">Save</strong>.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-emerald-950/20 p-4 rounded-xl border border-emerald-500/20 text-emerald-400 text-xs">
+                    <p class="font-bold mb-1"><i class="fa-solid fa-champagne-glasses mr-1"></i> Pronto!</p>
+                    Em menos de 2 minutos, o GitHub irá gerar um link público (como <code class="font-mono text-[10px] bg-slate-950 px-1 py-0.5 rounded text-emerald-300">https://seu-usuario.github.io/minhas-partituras</code>) que você poderá abrir em qualquer computador, celular ou tablet para gerenciar suas músicas de onde estiver!
+                </div>
+            </div>
+            
+            <div class="px-6 py-4 border-t border-slate-800 flex justify-end bg-slate-900/50">
+                <button onclick="closeModal('githubModal')" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-semibold transition-colors">
+                    Entendi!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICAÇÃO TOAST CUSTOMIZADA (Sem alert de navegador) -->
+    <div id="toastMessage" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 border border-amber-500 text-amber-400 px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-3 text-sm font-medium opacity-0 pointer-events-none transition-all duration-300">
+        <i class="fa-solid fa-circle-check text-amber-400 text-lg"></i>
+        <span id="toastText">Ação realizada com sucesso!</span>
+    </div>
+
+    <!-- SCRIPT DE LÓGICA DO APP CLAVE -->
+    <script>
+        // --- ESTADO DA APLICAÇÃO ---
+        let folders = [
+            { id: "pastas-teclado", name: "Estudos de Piano", icon: "fa-music" },
+            { id: "pastas-banda", name: "Repertório da Banda", icon: "fa-guitar" },
+            { id: "pastas-classicos", name: "Músicas Clássicas", icon: "fa-scroll" }
+        ];
+
+        let songs = [
+            {
+                id: "song-sample-1",
+                title: "Sonata ao Luar (Moonlight Sonata)",
+                composer: "Ludwig van Beethoven",
+                instrument: "Piano",
+                key: "C#m",
+                difficulty: "Avançado",
+                folderId: "pastas-classicos",
+                fileUrl: "", // Mock URL
+                fileType: "image",
+                notes: "Treinar a transição suave do primeiro movimento. Manter o pedal constante, porém sem embaralhar as notas graves.",
+                favorite: true
+            },
+            {
+                id: "song-sample-2",
+                title: "Imagine",
+                composer: "John Lennon",
+                instrument: "Teclado",
+                key: "C",
+                difficulty: "Iniciante",
+                folderId: "pastas-teclado",
+                fileUrl: "", // Mock URL
+                fileType: "image",
+                notes: "Acordes simples da mão esquerda de quatro em quatro batidas. Cuidado no dedilhado de transição C -> Cmaj7 -> F.",
+                favorite: false
+            }
+        ];
+
+        let currentFolderId = 'all'; // 'all', 'favorites' ou ID específico da pasta
+        let searchQuery = '';
+        let activeSongId = null;
+
+        // --- SISTEMA DE METRÔNOMO (Web Audio API) ---
+        let audioCtx = null;
+        let isMetronomePlaying = false;
+        let bpm = 120;
+        let metronomeInterval = null;
+        let beatsPerMeasure = 4;
+        let currentBeat = 0;
+
+        // --- INICIALIZAÇÃO ---
+        window.addEventListener('DOMContentLoaded', () => {
+            renderFolders();
+            renderSongs();
+            updateFolderCountDisplay();
+            setupDragAndDrop();
+        });
+
+        // --- FUNÇÕES DE INTERFACE / AUXILIARES ---
+        function showToast(message, iconClass = "fa-circle-check") {
+            const toast = document.getElementById('toastMessage');
+            const toastText = document.getElementById('toastText');
+            const toastIcon = toast.querySelector('i');
+            
+            toastText.textContent = message;
+            toastIcon.className = `${iconClass} text-amber-400 text-lg`;
+            
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // --- GERENCIAMENTO DE PASTAS ---
+        function renderFolders() {
+            const listContainer = document.getElementById('foldersList');
+            const formSelect = document.getElementById('songFolder');
+            const editSelect = document.getElementById('editViewerFolder');
+            
+            // Renderizar Sidebar
+            listContainer.innerHTML = '';
+            folders.forEach(folder => {
+                const isActive = currentFolderId === folder.id;
+                const activeClasses = isActive 
+                    ? 'bg-slate-800 text-amber-400 border-l-2 border-amber-500' 
+                    : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200';
+
+                // Contador de músicas por pasta
+                const count = songs.filter(s => s.folderId === folder.id).length;
+
+                listContainer.innerHTML += `
+                    <div class="group flex items-center justify-between w-full">
+                        <button onclick="selectFolder('${folder.id}')" class="flex-1 flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium ${activeClasses} text-left transition-colors truncate">
+                            <span class="flex items-center gap-3 truncate">
+                                <i class="fa-solid ${folder.icon || 'fa-folder'} w-4 text-center"></i>
+                                <span class="truncate">${folder.name}</span>
+                            </span>
+                            <span class="text-xs bg-slate-950 px-2 py-0.5 rounded text-slate-500 font-normal ml-2">${count}</span>
+                        </button>
+                        <button onclick="deleteFolder('${folder.id}')" class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 p-2 text-xs transition-opacity duration-200" title="Deletar pasta">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            });
+
+            // Atualizar Selectors dos Modais
+            const optionsHtml = folders.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+            formSelect.innerHTML = `<option value="">Nenhuma pasta (Todas)</option>` + optionsHtml;
+            editSelect.innerHTML = `<option value="">Nenhuma pasta (Todas)</option>` + optionsHtml;
+        }
+
+        function openPromptCreateFolder() {
+            // Criação de pasta elegante simulada em interface rápida
+            const folderName = prompt("Insira o nome da nova pasta:");
+            if (!folderName || folderName.trim() === "") return;
+
+            const newFolder = {
+                id: 'folder-' + Date.now(),
+                name: folderName.trim(),
+                icon: "fa-folder"
+            };
+
+            folders.push(newFolder);
+            renderFolders();
+            showToast(`Pasta "${folderName}" criada com sucesso!`);
+        }
+
+        function deleteFolder(folderId) {
+            const folder = folders.find(f => f.id === folderId);
+            if (!folder) return;
+
+            if (confirm(`Tem certeza que deseja deletar a pasta "${folder.name}"? As músicas serão desassociadas da pasta mas continuarão no acervo geral.`)) {
+                // Remove associação
+                songs.forEach(s => {
+                    if (s.folderId === folderId) s.folderId = "";
+                });
+                folders = folders.filter(f => f.id !== folderId);
+                if (currentFolderId === folderId) {
+                    currentFolderId = 'all';
+                }
+                renderFolders();
+                renderSongs();
+                updateFolderCountDisplay();
+                showToast("Pasta deletada!");
+            }
+        }
+
+        function selectFolder(folderId) {
+            currentFolderId = folderId;
+            
+            // Atualizar estilização dos botões estáticos
+            document.getElementById('btn-folder-all').className = `flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-left w-full transition-colors ${currentFolderId === 'all' ? 'bg-slate-800 text-amber-400' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}`;
+            document.getElementById('btn-folder-favorites').className = `flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-left w-full transition-colors ${currentFolderId === 'favorites' ? 'bg-slate-800 text-amber-400' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}`;
+
+            // Mudar título do Banner
+            const bannerTitle = document.getElementById('currentFolderName');
+            const bannerDesc = document.getElementById('currentFolderDesc');
+
+            if (folderId === 'all') {
+                bannerTitle.textContent = "Todas as Músicas";
+                bannerDesc.textContent = "Navegando por todas as partituras disponíveis no seu estúdio.";
+            } else if (folderId === 'favorites') {
+                bannerTitle.textContent = "Partituras Favoritas";
+                bannerDesc.textContent = "Apenas as músicas mais curtidas e salvas por você.";
+            } else {
+                const folder = folders.find(f => f.id === folderId);
+                if (folder) {
+                    bannerTitle.textContent = folder.name;
+                    bannerDesc.textContent = `Lista de partituras e estudos armazenados nesta pasta.`;
+                }
+            }
+
+            renderFolders(); // Recarregar a sidebar para mudar o ativo
+            renderSongs();
+        }
+
+        function updateFolderCountDisplay() {
+            document.getElementById('count-all').textContent = songs.length;
+            document.getElementById('count-favorites').textContent = songs.filter(s => s.favorite).length;
+        }
+
+        // --- GERENCIAMENTO DE MÚSICAS (CRUD) ---
+        function renderSongs() {
+            const grid = document.getElementById('songsGrid');
+            const emptyState = document.getElementById('emptyState');
+            
+            // Filtragem
+            let filteredSongs = songs;
+
+            // Filtro de Pasta
+            if (currentFolderId === 'favorites') {
+                filteredSongs = filteredSongs.filter(s => s.favorite);
+            } else if (currentFolderId !== 'all') {
+                filteredSongs = filteredSongs.filter(s => s.folderId === currentFolderId);
+            }
+
+            // Filtro por Busca Textual
+            if (searchQuery.trim() !== '') {
+                const query = searchQuery.toLowerCase().trim();
+                filteredSongs = filteredSongs.filter(s => 
+                    s.title.toLowerCase().includes(query) || 
+                    s.composer.toLowerCase().includes(query) || 
+                    s.instrument.toLowerCase().includes(query)
+                );
+            }
+
+            // Filtros de Instrumento e Dificuldade
+            const instVal = document.getElementById('instrumentFilter').value;
+            const diffVal = document.getElementById('difficultyFilter').value;
+
+            if (instVal !== 'all') {
+                filteredSongs = filteredSongs.filter(s => s.instrument === instVal);
+            }
+            if (diffVal !== 'all') {
+                filteredSongs = filteredSongs.filter(s => s.difficulty === diffVal);
+            }
+
+            // Renderizar Grid
+            grid.innerHTML = '';
+            if (filteredSongs.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+                grid.classList.remove('hidden');
+
+                filteredSongs.forEach(song => {
+                    const isFav = song.favorite;
+                    const folderName = folders.find(f => f.id === song.folderId)?.name || 'Geral';
+                    
+                    // Render do Card
+                    grid.innerHTML += `
+                        <div class="bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-xl p-5 flex flex-col justify-between gap-4 transition-all hover:shadow-xl hover:shadow-amber-500/5 group relative">
+                            <!-- Botão Favorito no Card -->
+                            <button onclick="event.stopPropagation(); toggleSongFavorite('${song.id}')" class="absolute top-4 right-4 text-sm ${isFav ? 'text-amber-500' : 'text-slate-600 hover:text-amber-400'} transition-colors">
+                                <i class="fa-${isFav ? 'solid' : 'regular'} fa-star text-base"></i>
+                            </button>
+
+                            <div onclick="openSongViewer('${song.id}')" class="cursor-pointer flex-1 flex flex-col gap-3">
+                                <!-- Tag da Pasta / Ícone do arquivo -->
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-semibold text-slate-400 uppercase bg-slate-950 px-2 py-0.5 rounded border border-slate-800">${folderName}</span>
+                                    <span class="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/10">${song.instrument}</span>
+                                </div>
+
+                                <!-- Título -->
+                                <div>
+                                    <h3 class="font-bold text-slate-100 group-hover:text-amber-400 transition-colors serif-title text-base leading-snug line-clamp-2">${song.title}</h3>
+                                    <p class="text-xs text-slate-400 mt-1">${song.composer || 'Compositor Desconhecido'}</p>
+                                </div>
+                            </div>
+
+                            <!-- Footer do Card -->
+                            <div class="border-t border-slate-800/80 pt-3 mt-1 flex items-center justify-between text-xs text-slate-500">
+                                <div class="flex items-center gap-1">
+                                    <i class="fa-solid fa-signal text-[10px]"></i>
+                                    <span>${song.difficulty}</span>
+                                </div>
+                                ${song.key ? `
+                                <div class="flex items-center gap-1 font-semibold text-slate-400">
+                                    <i class="fa-solid fa-music text-[10px]"></i>
+                                    <span>${song.key}</span>
+                                </div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function handleSearch() {
+            searchQuery = document.getElementById('searchInput').value;
+            renderSongs();
+        }
+
+        function handleFilter() {
+            renderSongs();
+        }
+
+        function toggleSongFavorite(songId) {
+            const song = songs.find(s => s.id === songId);
+            if (song) {
+                song.favorite = !song.favorite;
+                renderSongs();
+                updateFolderCountDisplay();
+                showToast(song.favorite ? "Adicionada aos favoritos!" : "Removida dos favoritos");
+            }
+        }
+
+        // --- SISTEMA DE ARQUIVOS (FileReader) ---
+        let selectedFileBlob = null;
+        let selectedFileType = "";
+        let selectedFileName = "";
+
+        function handleFileSelected(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            selectedFileName = file.name;
+            selectedFileType = file.type;
+
+            // Criar URL seguro e legível localmente
+            selectedFileBlob = URL.createObjectURL(file);
+
+            // Trocar Placeholders na interface do Modal de Upload
+            document.getElementById('filePlaceholder').classList.add('hidden');
+            const infoDiv = document.getElementById('fileSelectedInfo');
+            infoDiv.classList.remove('hidden');
+            document.getElementById('selectedFileName').textContent = file.name;
+
+            // Pré-preencher o título com o nome do arquivo se estiver vazio
+            const titleInput = document.getElementById('songTitle');
+            if (titleInput.value.trim() === "") {
+                titleInput.value = file.name.replace(/\.[^/.]+$/, ""); // Remove extensão do arquivo
+            }
+        }
+
+        function openAddSongModal() {
+            // Limpar formulário de upload
+            document.getElementById('songTitle').value = "";
+            document.getElementById('songComposer').value = "";
+            document.getElementById('songKey').value = "";
+            document.getElementById('songNotes').value = "";
+            document.getElementById('songFileInput').value = "";
+            
+            document.getElementById('filePlaceholder').classList.remove('hidden');
+            document.getElementById('fileSelectedInfo').classList.add('hidden');
+
+            selectedFileBlob = null;
+            selectedFileType = "";
+            selectedFileName = "";
+
+            openModal('addSongModal');
+        }
+
+        function saveNewSong(event) {
+            event.preventDefault();
+
+            const title = document.getElementById('songTitle').value.trim();
+            const composer = document.getElementById('songComposer').value.trim();
+            const instrument = document.getElementById('songInstrument').value;
+            const key = document.getElementById('songKey').value.trim();
+            const difficulty = document.getElementById('songDifficulty').value;
+            const folderId = document.getElementById('songFolder').value;
+            const notes = document.getElementById('songNotes').value.trim();
+
+            if (!selectedFileBlob) {
+                showToast("Por favor, selecione um arquivo de partitura válido.", "fa-triangle-exclamation");
+                return;
+            }
+
+            const newSong = {
+                id: 'song-' + Date.now(),
+                title,
+                composer: composer || "Desconhecido",
+                instrument,
+                key,
+                difficulty,
+                folderId,
+                fileUrl: selectedFileBlob, // URL temporário em memória do browser
+                fileType: selectedFileType.includes('pdf') ? 'pdf' : 'image',
+                notes,
+                favorite: false
+            };
+
+            songs.push(newSong);
+            closeModal('addSongModal');
+            renderSongs();
+            updateFolderCountDisplay();
+            renderFolders(); // Atualizar números de músicas nas pastas
+            showToast("Partitura adicionada ao estúdio!");
+        }
+
+        // --- SISTEMA DE VISUALIZAÇÃO CHEIA (MODAL DE ENSAIO) ---
+        function openSongViewer(songId) {
+            const song = songs.find(s => s.id === songId);
+            if (!song) return;
+
+            activeSongId = songId;
+
+            // Preencher metadados no visualizador
+            document.getElementById('viewerTitle').textContent = song.title;
+            document.getElementById('viewerSubtitle').innerHTML = `
+                ${song.composer} • <span class="text-amber-400 font-semibold">${song.instrument}</span> ${song.key ? `• Tom: <strong class="text-white">${song.key}</strong>` : ''}
+            `;
+
+            // Configurações do formulário lateral rápido do visualizador
+            document.getElementById('editViewerTitle').value = song.title;
+            document.getElementById('editViewerComposer').value = song.composer;
+            document.getElementById('editViewerKey').value = song.key;
+            document.getElementById('editViewerFolder').value = song.folderId;
+            document.getElementById('viewerNotes').value = song.notes || "";
+
+            // Botão Favorito no visualizador
+            const favBtn = document.getElementById('viewerBtnFav');
+            if (song.favorite) {
+                favBtn.className = "w-10 h-10 rounded-lg bg-slate-800 text-amber-500 hover:text-amber-400 transition-colors flex items-center justify-center";
+            } else {
+                favBtn.className = "w-10 h-10 rounded-lg bg-slate-800 text-slate-400 hover:text-amber-500 transition-colors flex items-center justify-center";
+            }
+
+            // Renderizar arquivo (PDF ou Imagem)
+            const fileContainer = document.getElementById('viewerFileContainer');
+            fileContainer.innerHTML = '';
+
+            if (song.fileUrl) {
+                if (song.fileType === 'pdf') {
+                    // Embed do visualizador de PDF nativo
+                    fileContainer.innerHTML = `<embed src="${song.fileUrl}" type="application/pdf" class="w-full h-full" />`;
+                } else {
+                    // Visualizador de Imagem
+                    fileContainer.innerHTML = `<img src="${song.fileUrl}" class="max-w-full max-h-full object-contain mx-auto" alt="Partitura" />`;
+                }
+            } else {
+                // Caso seja um sample sem arquivo real, mostrar preview elegante simulado
+                fileContainer.innerHTML = `
+                    <div class="text-slate-500 text-center flex flex-col items-center gap-4 p-8">
+                        <div class="w-24 h-24 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-amber-500/20 text-4xl">
+                            <i class="fa-solid fa-scroll"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-300 font-semibold mb-1">Visualização de Demo do Estúdio</p>
+                            <p class="text-xs text-slate-500 max-w-sm">Esta é uma música de demonstração. Em suas músicas carregadas, a imagem da partitura ou o PDF aparecerá inteiramente aqui de forma mágica!</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            openModal('viewerModal');
+        }
+
+        function closeViewer() {
+            closeModal('viewerModal');
+            activeSongId = null;
+            renderSongs();
+            updateFolderCountDisplay();
+            renderFolders();
+        }
+
+        // Atualização em tempo real das anotações/título durante a visualização
+        function updateSongFromViewer(field, value) {
+            if (!activeSongId) return;
+
+            const song = songs.find(s => s.id === activeSongId);
+            if (song) {
+                song[field] = value;
+                
+                // Se atualizou algo que mude o topo, recarrega o cabeçalho do visualizador
+                if (field === 'title' || field === 'composer' || field === 'instrument' || field === 'key') {
+                    document.getElementById('viewerTitle').textContent = song.title;
+                    document.getElementById('viewerSubtitle').innerHTML = `
+                        ${song.composer} • <span class="text-amber-400 font-semibold">${song.instrument}</span> ${song.key ? `• Tom: <strong class="text-white">${song.key}</strong>` : ''}
+                    `;
+                }
+            }
+        }
+
+        function toggleViewerFavorite() {
+            if (!activeSongId) return;
+            toggleSongFavorite(activeSongId);
+            
+            const song = songs.find(s => s.id === activeSongId);
+            const favBtn = document.getElementById('viewerBtnFav');
+            if (song && song.favorite) {
+                favBtn.className = "w-10 h-10 rounded-lg bg-slate-800 text-amber-500 hover:text-amber-400 transition-colors flex items-center justify-center";
+            } else {
+                favBtn.className = "w-10 h-10 rounded-lg bg-slate-800 text-slate-400 hover:text-amber-500 transition-colors flex items-center justify-center";
+            }
+        }
+
+        function deleteSongFromViewer() {
+            if (!activeSongId) return;
+
+            const song = songs.find(s => s.id === activeSongId);
+            if (song && confirm(`Excluir permanentemente "${song.title}" do seu acervo?`)) {
+                songs = songs.filter(s => s.id !== activeSongId);
+                closeViewer();
+                showToast("Partitura removida do estúdio");
+            }
+        }
+
+        // --- SISTEMA DE METRÔNOMO INTERATIVO ---
+        function toggleMetronomePanel() {
+            const panel = document.getElementById('metronomePanel');
+            panel.classList.toggle('translate-x-full');
+        }
+
+        function updateBPM(val) {
+            bpm = parseInt(val);
+            document.getElementById('bpmDisplay').textContent = bpm;
+            document.getElementById('bpmRange').value = bpm;
+            
+            if (isMetronomePlaying) {
+                stopMetronome();
+                startMetronome();
+            }
+        }
+
+        function adjustBPM(amount) {
+            let nextBpm = bpm + amount;
+            if (nextBpm < 40) nextBpm = 40;
+            if (nextBpm > 240) nextBpm = 240;
+            updateBPM(nextBpm);
+        }
+
+        function toggleMetronomePlay() {
+            const btn = document.getElementById('btnPlayMetro');
+            if (isMetronomePlaying) {
+                stopMetronome();
+                btn.innerHTML = `<i class="fa-solid fa-play"></i> INICIAR`;
+                btn.className = "w-full py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl font-bold tracking-wider transition-all transform active:scale-95 flex items-center justify-center gap-2";
+            } else {
+                startMetronome();
+                btn.innerHTML = `<i class="fa-solid fa-stop"></i> PARAR`;
+                btn.className = "w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold tracking-wider transition-all transform active:scale-95 flex items-center justify-center gap-2";
+            }
+        }
+
+        function startMetronome() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            isMetronomePlaying = true;
+            beatsPerMeasure = parseInt(document.getElementById('timeSignature').value);
+            currentBeat = 0;
+
+            const intervalMs = (60 / bpm) * 1000;
+            
+            // Intervalo de click
+            metronomeInterval = setInterval(() => {
+                playClickSound();
+                triggerVisualPulse();
+                currentBeat = (currentBeat + 1) % beatsPerMeasure;
+            }, intervalMs);
+        }
+
+        function stopMetronome() {
+            isMetronomePlaying = false;
+            if (metronomeInterval) {
+                clearInterval(metronomeInterval);
+                metronomeInterval = null;
+            }
+            // Reset visual pulse
+            const pulse = document.getElementById('metroPulse');
+            pulse.className = "w-20 h-20 rounded-full border-4 border-slate-800 flex items-center justify-center bg-slate-950 transition-all duration-100";
+            document.getElementById('pulseHeart').className = "fa-solid fa-heart-pulse text-2xl text-slate-700";
+        }
+
+        function playClickSound() {
+            if (!audioCtx) return;
+
+            // Retomar audio context se estiver suspenso (proteção de navegadores)
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            // Se for a primeira batida do compasso, dá um pitch mais agudo (som de sineta)
+            const isFirstBeat = currentBeat === 0;
+            osc.frequency.setValueAtTime(isFirstBeat ? 1200 : 800, audioCtx.currentTime);
+            
+            // Curva rápida de fade out para simular um clique mecânico seco
+            gainNode.gain.setValueAtTime(isFirstBeat ? 1.0 : 0.6, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        function triggerVisualPulse() {
+            const pulse = document.getElementById('metroPulse');
+            const heart = document.getElementById('pulseHeart');
+            const isFirstBeat = currentBeat === 0;
+
+            if (isFirstBeat) {
+                pulse.className = "w-20 h-20 rounded-full border-4 border-amber-400 flex items-center justify-center bg-amber-500/10 shadow-lg shadow-amber-500/25 scale-110 transition-all duration-75";
+                heart.className = "fa-solid fa-heart-pulse text-2xl text-amber-400";
+            } else {
+                pulse.className = "w-20 h-20 rounded-full border-4 border-slate-600 flex items-center justify-center bg-slate-800 scale-105 transition-all duration-75";
+                heart.className = "fa-solid fa-heart-pulse text-2xl text-slate-300";
+            }
+
+            // Voltar ao normal logo após a batida
+            setTimeout(() => {
+                if (isMetronomePlaying) {
+                    pulse.className = "w-20 h-20 rounded-full border-4 border-slate-800 flex items-center justify-center bg-slate-950 transition-all duration-100";
+                    heart.className = "fa-solid fa-heart-pulse text-2xl text-slate-700";
+                }
+            }, 150);
+        }
+
+        // --- DRAG AND DROP SIMULADO ---
+        function setupDragAndDrop() {
+            const dropArea = document.querySelector('.border-dashed');
+            if(!dropArea) return;
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, () => {
+                    dropArea.classList.add('border-amber-500', 'bg-amber-500/5');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, () => {
+                    dropArea.classList.remove('border-amber-500', 'bg-amber-500/5');
+                }, false);
+            });
+
+            dropArea.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    const fileInput = document.getElementById('songFileInput');
+                    fileInput.files = files;
+                    handleFileSelected(fileInput);
+                }
+            }, false);
+        }
+    </script>
+</body>
+</html>
